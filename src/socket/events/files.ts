@@ -152,16 +152,14 @@ export default {
                 }
                 
                 if (socket.client) {
-                    let buffer: string = '';
-                    const listener = (args: any[]) => buffer += args.toString();
-
+                    let buffers: Buffer[] = [];
+                    const listener = (buffer: Buffer) => { buffers.push(buffer); }
                     socket.client.on(`BUFFER-${id}`, listener);
-
                     socket.client.once(`EOF-${id}`, () => {
                         if (socket.client) {
                             socket.client.off(`BUFFER-${id}`, listener);
                         }
-                        writeFileSync(location.path, buffer);
+                        writeFileSync(location.path, Buffer.concat(buffers));
                     });
                 }
                 break;
