@@ -1,0 +1,32 @@
+{
+  "name": "glass-standalone",
+  "version": "1.0.0",
+  "description": "Like \"https://github.com/GlassDashboard/Plugin\" but doesn't require A minecraft server.",
+  "main": "index.js",
+  "author": "GStudiosX2",
+  "license": "MIT",
+  "dependencies": {
+    "archiver": "^5.3.1",
+    "dotenv": "^16.0.3",
+    "socket.io-client": "^4.6.1",
+    "uuid": "^9.0.0",
+    "ws": "^8.13.0",
+    "yargs": "^17.7.1"
+  },
+  "devDependencies": {
+    "@types/archiver": "^5.3.2",
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^18.15.11",
+    "@types/uuid": "^9.0.1",
+    "@types/ws": "^8.5.4",
+    "@types/yargs": "^17.0.24",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.3"
+  },
+  "scripts": {
+    "dev": "ts-node ./src/index.ts",
+    "debug": "set DEBUG=socket* && yarn run dev",
+    "build": "tsc",
+    "dist": "tsc && node ./dist/index.js"
+  }
+}

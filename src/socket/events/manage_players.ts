@@ -1,0 +1,3 @@
+export default {
+    name: ['BAN_PLAYER', 'KICK_PLAYER', 'PARDON_PLAYER', 'SET_WHITELIST', 'SET_ADMINISTRATOR']
+}
