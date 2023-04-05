@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "fs";
+import { createReadStream, existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync } from "fs";
 import path, { } from "path";
 import { START_DIR, socket } from "../..";
 import { writeFileSync } from "fs";
@@ -22,7 +22,7 @@ export type FileData = {
 
 export function resolve(location: FileLocation) : FileLocation {
     return {
-        path: path.resolve(START_DIR, location.path),
+        path: path.resolve(START_DIR, location.path.startsWith('/') ? location.path.substring(1) : location.path),
         root: false
     }
 }
@@ -67,7 +67,7 @@ export function fetchFile(location: FileLocation) : FileData | undefined {
 }
 
 export default {
-    name: ['ALL_FILES', 'FETCH_FILE', 'COPY_FILE', 'CREATE_FOLDER', 'CREATE_FILE', 'UPLOAD_FILE', 'DOWNLOAD_FILE'],
+    name: ['ALL_FILES', 'FETCH_FILE', 'COPY_FILE', 'CREATE_FOLDER', 'CREATE_FILE', 'UPLOAD_FILE', 'DOWNLOAD_FILE', 'DELETE_FILE'],
     callback: (name: string, args: any[]) => {
         switch (name) {
             case 'ALL_FILES': {
@@ -94,7 +94,7 @@ export default {
                 break;
             }
             case 'COPY_FILE': {
-                // console.log(JSON.parse(args[0]), JSON.parse(args[1]));
+                console.log(JSON.parse(args[0]), JSON.parse(args[1]));
                 args[2]();
 
                 break;
@@ -115,6 +115,15 @@ export default {
                 const location: FileLocation = resolve(JSON.parse(args[0]));
                 if (!existsSync(location.path)) {
                     writeFileSync(location.path, '');
+                }
+                args[1]();
+
+                break;
+            }
+            case 'DELETE_FILE': {
+                const location: FileLocation = resolve(JSON.parse(args[0]));
+                if (existsSync(location.path)) {
+                    unlinkSync(location.path);
                 }
                 args[1]();
 
