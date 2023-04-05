@@ -1,16 +1,12 @@
 import { readdirSync } from 'fs';
 import { Socket, io } from 'socket.io-client';
 import * as out from './console';
-import { LogLevel } from "../types";
-
-export type EventData = {
-    name: string | string[],
-    callback: (name: string, ...args: any[]) => void
-}
+import { EventData, LogLevel } from "../types";
 
 export class GlassSocket {
     client: Socket | undefined;
     reconnectAttempts: number = 0;
+    timeout: NodeJS.Timeout | undefined;
 
     connect(token: string | undefined, baseUrl: string | undefined) {
         if (!token) {
@@ -25,21 +21,19 @@ export class GlassSocket {
 
         this.client = io(baseUrl, {
             path: '/socket',
-            auth: {
-                token,
-                type: 'PLUGIN',
-                minecraft: 'UNKNOWN',
-                version: '1.0.0'
-            },
+            auth: { token, type: 'PLUGIN', minecraft: 'UNKNOWN', version: '1.0.0' },
             autoConnect: false
         }).on("connect", () => {
             out.info(`Connected to glass websocket with reconnect attempts: ${this.reconnectAttempts}`);
+            if (this.timeout) {
+                clearTimeout(this.timeout);
+            }
             this.reconnectAttempts = 0;
         }).on("error", (data) => {
             out.info(`Error: ${data[0]}`);
         }).on("disconnect", (reason, description) => {
             out.info(`Connection to "${baseUrl}" was closed for: ${reason}`);
-            out.info(`Error Description: ${description}`);
+            out.info(`Error Description: ${JSON.stringify(description)}`);
             out.info(`Trying to reconnect in 5 seconds attempt ${this.reconnectAttempts}.`);
 
             if (this.reconnectAttempts === 5) {
@@ -47,14 +41,14 @@ export class GlassSocket {
                 process.exit(0);
             }
         
-            setTimeout(() => {
+            this.timeout = setTimeout(() => {
                 this.reconnectAttempts++;
-
                 this.close();
                 this.connect(token, baseUrl);
             }, 5000);
         });
 
+        // TODO: clean this up
         readdirSync(__dirname + '/events').forEach(async (event) => {
             const data = (await import(`./events/${event}`)).default;
             if (this.client) {
@@ -93,6 +87,10 @@ export class GlassSocket {
     sendLog(logType: LogLevel, log: string) {
         if (this.client) {
             this.client.emit("CONSOLE_LOG", JSON.stringify(out.log_level(logType, log)));
+        }
+
+        if (this.timeout) {
+            clearTimeout(this.timeout);
         }
     }
 

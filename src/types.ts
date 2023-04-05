@@ -48,3 +48,9 @@ export type TinyPlayer = {
     whitelisted: boolean,
     online: boolean,
 }
+
+// EVENTS
+export type EventData = {
+    name: string | string[],
+    callback: (name: string, ...args: any[]) => void
+}

@@ -21,32 +21,36 @@ export function resolve(location: FileLocation) : FileLocation {
     };
 }
 
-export function fetchFile(location: FileLocation) : FileData | undefined {
+export function fetchFile(location: FileLocation, grabContent?: boolean) : FileData | undefined {
     const newLocation = resolve(location);
 
-    if (!existsSync(newLocation.path)) {
-        return undefined;
+    if (!newLocation.path.startsWith(START_DIR) || !existsSync(newLocation.path)) {
+        return { name: newLocation.path, directory: false, accessible: false, error: "File does not exist" };
     }
 
     const stat = statSync(newLocation.path);
     const name = newLocation.path.substring(newLocation.path.lastIndexOf(path.sep) + 1);
     const size = stat.size;
-
+    
     if (stat.isDirectory()) {
+        if (path.resolve(path.join(newLocation.path, name), '..') !== newLocation.path) {
+            return undefined;
+        }
+
         return { 
             name, directory: true, accessible: true, size, 
             children: readdirSync(newLocation.path).map((file) => fetchFile({
                 path: `${newLocation.path}/${file}`,
                 root: false
-            })).filter((value) => value != undefined) as FileData[] 
+            }, true)) as FileData[]
         };
     }
 
     return {
         name, directory: false, accessible: true,
-        size, content: stat.size > MAX_FILE_SIZE 
+        size, content: (!grabContent ? (stat.size > MAX_FILE_SIZE 
             ? "File is too large to be displayed" 
-            : readFileSync(newLocation.path).toString()
+            : readFileSync(newLocation.path).toString()) : "")
     };
 }
 
