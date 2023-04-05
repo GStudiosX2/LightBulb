@@ -17,3 +17,10 @@ To specify which directory the file manager should start from you do `yarn dist 
 `yarn dist --help`
 
 Now you can manage files on your computer or vps/dedicated server from `glass.santio.me`.
+
+# Screenshots
+
+![image](https://user-images.githubusercontent.com/76548041/230159307-688b8c19-7f2c-4f0b-84f9-3d7b81a13e7b.png)
+![image](https://user-images.githubusercontent.com/76548041/230159357-a3129ccc-debb-4f17-99c0-d362c517803f.png)
+
+**WARNING FTP may not work yet and you can't run commands from the console like if you have ssh'd into the server this may be a feature soon!**
