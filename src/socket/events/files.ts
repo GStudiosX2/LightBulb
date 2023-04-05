@@ -1,7 +1,13 @@
-import { copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync } from "fs";
-import path, { } from "path";
+import { 
+    copyFileSync, cpSync,
+    existsSync, mkdirSync, 
+    readFileSync, readdirSync, 
+    renameSync, rmSync, 
+    statSync, createReadStream, 
+    unlinkSync, writeFileSync
+} from "fs";
+import path from "path";
 import { START_DIR, socket } from "../..";
-import { writeFileSync } from "fs";
 import { v4 as uuidv4 } from "uuid";
 import archiver from "archiver";
 
@@ -96,7 +102,13 @@ export default {
             case 'COPY_FILE': {
                 const from: FileLocation = resolve(JSON.parse(args[0]));
                 const to: FileLocation = resolve(JSON.parse(args[1]));
-                copyFileSync(from.path, to.path);
+                if (statSync(from.path).isDirectory()) {
+                    cpSync(from.path, to.path, { 
+                        recursive: true 
+                    });
+                } else {
+                    copyFileSync(from.path, to.path);
+                }
                 args[2]();
 
                 break;
@@ -133,7 +145,13 @@ export default {
             case 'DELETE_FILE': {
                 const location: FileLocation = resolve(JSON.parse(args[0]));
                 if (existsSync(location.path)) {
-                    unlinkSync(location.path);
+                    if (statSync(location.path).isDirectory()) {
+                        rmSync(location.path, { 
+                            recursive: true 
+                        });
+                    } else {
+                        unlinkSync(location.path);
+                    }
                 }
                 args[1]();
 
