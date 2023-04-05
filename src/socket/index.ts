@@ -1,6 +1,6 @@
 import { readdirSync } from 'fs';
 import { Socket, io } from 'socket.io-client';
-import { LevelType, log, log_level } from './console';
+import { LogLevel, log, log_level } from './console';
 
 export type EventData = {
     name: string | string[],
@@ -89,7 +89,7 @@ export class GlassSocket {
         this.client.connect();
     }
 
-    sendLog(logType: LevelType, log: string) {
+    sendLog(logType: LogLevel, log: string) {
         if (this.client) {
             this.client.emit("CONSOLE_LOG", JSON.stringify(log_level(logType, log)));
         }

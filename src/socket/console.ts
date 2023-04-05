@@ -1,10 +1,10 @@
 import { socket } from "..";
 
-export type LevelType = 'INFO' | 'WARN' | 'SERVERE';
+export type LogLevel = 'INFO' | 'WARN' | 'SERVERE';
 
 export type Log = {
     log: string,
-    level: LevelType
+    level: LogLevel
 }
 
 export type ConsoleLog = {
@@ -22,7 +22,7 @@ export function setMaxLogs(ml: number) {
     maxLogs = ml;
 }
 
-export function log_level(level: LevelType, text: string) : ConsoleLog {
+export function log_level(level: LogLevel, text: string) : ConsoleLog {
     return {
         timestamp: Date.now().toString(),
         log: {
