@@ -1,6 +1,7 @@
 import { readdirSync } from 'fs';
 import { Socket, io } from 'socket.io-client';
-import { LogLevel, log, log_level } from './console';
+import * as out from './console';
+import { LogLevel } from "../types";
 
 export type EventData = {
     name: string | string[],
@@ -32,14 +33,14 @@ export class GlassSocket {
             },
             autoConnect: false
         }).on("connect", () => {
-            log(`Connected to glass websocket with reconnect attempts: ${this.reconnectAttempts}`);
+            out.info(`Connected to glass websocket with reconnect attempts: ${this.reconnectAttempts}`);
             this.reconnectAttempts = 0;
         }).on("error", (data) => {
-            log(`Error: ${data[0]}`);
+            out.info(`Error: ${data[0]}`);
         }).on("disconnect", (reason, description) => {
-            log(`Connection to "${baseUrl}" was closed for: ${reason}`);
-            log(`Error Description: ${description}`);
-            log(`Trying to reconnect in 5 seconds attempt ${this.reconnectAttempts}.`);
+            out.info(`Connection to "${baseUrl}" was closed for: ${reason}`);
+            out.info(`Error Description: ${description}`);
+            out.info(`Trying to reconnect in 5 seconds attempt ${this.reconnectAttempts}.`);
 
             if (this.reconnectAttempts === 5) {
                 this.close();
@@ -91,7 +92,7 @@ export class GlassSocket {
 
     sendLog(logType: LogLevel, log: string) {
         if (this.client) {
-            this.client.emit("CONSOLE_LOG", JSON.stringify(log_level(logType, log)));
+            this.client.emit("CONSOLE_LOG", JSON.stringify(out.log_level(logType, log)));
         }
     }
 

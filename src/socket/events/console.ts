@@ -1,11 +1,6 @@
 import { CONSOLE_LOGS } from "../console";
-import { warning } from "../console";
-
-export type Command = {
-    user: string,
-    original: string,
-    command: string
-};
+import * as out from "../console";
+import { Command } from "../../types";
 
 export default {
     name: ['FETCH_CONSOLE_HISTORY', 'EXECUTE_COMMAND'],
@@ -16,6 +11,7 @@ export default {
                 ack(JSON.stringify({ logs: CONSOLE_LOGS }));
                 break;
             }
+
             case 'EXECUTE_COMMAND': {
                 const command: Command = JSON.parse(args[0]);
 
@@ -23,7 +19,7 @@ export default {
                     return;
                 }
 
-                warning(`'EXECUTE_COMMAND' has not been implemented yet: ${JSON.stringify(command)}`, {
+                out.warn(`'EXECUTE_COMMAND' has not been implemented yet: ${JSON.stringify(command)}`, {
                     send: true
                 });
                 break;

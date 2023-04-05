@@ -1,16 +1,5 @@
 import { socket } from "..";
-
-export type LogLevel = 'INFO' | 'WARN' | 'SERVERE';
-
-export type Log = {
-    log: string,
-    level: LogLevel
-}
-
-export type ConsoleLog = {
-    timestamp: string,
-    log: Log
-}
+import { ConsoleLog, LogLevel, LogOptions } from "../types";
 
 export const PREFIX = '§7[§bGLASS STANDALONE§7]';
 export const CONSOLE_LOGS: ConsoleLog[] = [];
@@ -18,44 +7,36 @@ export const CONSOLE_LOGS: ConsoleLog[] = [];
 let maxLogs = 500;
 
 export function setMaxLogs(ml: number) {
-    ml = ml <= 0 ? 1 : ml;
-    maxLogs = ml;
+    maxLogs = ml <= 0 ? 1 : ml;
 }
 
 export function log_level(level: LogLevel, text: string) : ConsoleLog {
     return {
         timestamp: Date.now().toString(),
-        log: {
-            log: text,
-            level
-        }
-    }
+        log: { log: text, level }
+    };
 }
 
-export function info(text: string) : ConsoleLog {
+export function log_info(text: string) : ConsoleLog {
     return log_level('INFO', text);
 }
 
-export function warn(text: string) : ConsoleLog {
+export function log_warn(text: string) : ConsoleLog {
     return log_level('WARN', text);
 }
 
-export function servere(text: string) : ConsoleLog {
+export function log_servere(text: string) : ConsoleLog {
     return log_level('SERVERE', text);
 }
 
-export type LogOptions = {
-    prefix?: string,
-    send?: boolean
-}
-
-export function log(text: string, options?: LogOptions) {
+// TODO: below needs some cleanup
+export function info(text: string, options?: LogOptions) {
     if (CONSOLE_LOGS.length > maxLogs) {
         CONSOLE_LOGS.shift();
     }
 
     const str = `${options?.prefix === undefined ? `${PREFIX} §7[INFO§7]` : options?.prefix} §r${text}`;
-    CONSOLE_LOGS.push(info(str));
+    CONSOLE_LOGS.push(log_info(str));
     console.log(`[GLASS] [INFO] ${text}`);
 
     if (options?.send) {
@@ -63,13 +44,13 @@ export function log(text: string, options?: LogOptions) {
     }
 }
 
-export function warning(text: string, options?: LogOptions) {
+export function warn(text: string, options?: LogOptions) {
     if (CONSOLE_LOGS.length > maxLogs) {
         CONSOLE_LOGS.shift();
     }
 
     const str = `${options?.prefix === undefined ? `${PREFIX} §e[WARN]` : options?.prefix} §e${text}`;
-    CONSOLE_LOGS.push(warn(str));
+    CONSOLE_LOGS.push(log_warn(str));
     console.warn(`[GLASS] [WARN] ${text}`);
 
     if (options?.send) {
@@ -77,13 +58,13 @@ export function warning(text: string, options?: LogOptions) {
     }
 }
 
-export function error(text: string, options?: LogOptions) {
+export function servere(text: string, options?: LogOptions) {
     if (CONSOLE_LOGS.length > maxLogs) {
         CONSOLE_LOGS.shift();
     }
 
     const str = `${options?.prefix === undefined ? `${PREFIX} §e[SERVERE]` : options?.prefix} §e${text}`;
-    CONSOLE_LOGS.push(servere(str));
+    CONSOLE_LOGS.push(log_servere(str));
     console.error(`[GLASS] [ERROR] ${text}`);
 
     if (options?.send) {

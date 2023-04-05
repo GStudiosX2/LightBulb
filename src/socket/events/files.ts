@@ -10,30 +10,16 @@ import path from "path";
 import { START_DIR, socket } from "../..";
 import { v4 as uuidv4 } from "uuid";
 import archiver from "archiver";
+import { FileLocation, FileData } from "../../types";
 
-export type FileLocation = {
-    path: string,
-    root: boolean
-}
-
-export type FileData = {
-    name: string,
-    directory: boolean,
-    accessible: boolean,
-    size?: number,
-    content?: string,
-    children?: FileData[],
-    error?: String
-}
+export const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3 MB
 
 export function resolve(location: FileLocation) : FileLocation {
     return {
         path: path.resolve(START_DIR, location.path.startsWith('/') ? location.path.substring(1) : location.path),
         root: false
-    }
+    };
 }
-
-export const MAX_FILE_SIZE = 3 * 1024 * 1024;
 
 export function fetchFile(location: FileLocation) : FileData | undefined {
     const newLocation = resolve(location);
@@ -47,34 +33,33 @@ export function fetchFile(location: FileLocation) : FileData | undefined {
     const size = stat.size;
 
     if (stat.isDirectory()) {
-        const children = readdirSync(newLocation.path).map((file) => fetchFile({
-            path: `${newLocation.path}/${file}`,
-            root: false
-        })).filter((value) => value != undefined) as FileData[];
-
-        return {
-            name,
-            directory: true,
-            accessible: true,
-            size,
-            children
-        };
-    } else {
-        return {
-            name,
-            directory: false,
-            accessible: true,
-            size,
-            content: stat.size > MAX_FILE_SIZE 
-                ? "File is too large to be displayed" 
-                : readFileSync(newLocation.path).toString()
+        return { 
+            name, directory: true, accessible: true, size, 
+            children: readdirSync(newLocation.path).map((file) => fetchFile({
+                path: `${newLocation.path}/${file}`,
+                root: false
+            })).filter((value) => value != undefined) as FileData[] 
         };
     }
+
+    return {
+        name, directory: false, accessible: true,
+        size, content: stat.size > MAX_FILE_SIZE 
+            ? "File is too large to be displayed" 
+            : readFileSync(newLocation.path).toString()
+    };
 }
 
 export default {
-    name: ['ALL_FILES', 'FETCH_FILE', 'COPY_FILE', 'CREATE_FOLDER', 'CREATE_FILE', 'UPLOAD_FILE', 'DOWNLOAD_FILE', 'DELETE_FILE', 'MOVE_FILE'],
+    name: [
+        'ALL_FILES', 'FETCH_FILE', // fetch
+        'COPY_FILE', 'DOWNLOAD_FILE', 'DELETE_FILE', 'MOVE_FILE', // copy, download, delete, move
+        'CREATE_FOLDER', 'CREATE_FILE',  // create
+        'UPLOAD_FILE' // upload
+    ],
     callback: (name: string, args: any[]) => {
+        const ack = args[args.length - 1];
+
         switch (name) {
             case 'ALL_FILES': {
                 const location: FileLocation = JSON.parse(args[0]);
@@ -84,79 +69,80 @@ export default {
                     return;
                 }
 
-                args[1](JSON.stringify(readdirSync(newLocation.path).map((file) => fetchFile({
+                ack(JSON.stringify(readdirSync(newLocation.path).map((file) => fetchFile({
                     path: `${newLocation.path}/${file}`,
                     root: false
                 })).filter((value) => value != undefined) as FileData[]));
-
                 break;
             }
+
             case 'FETCH_FILE': {
                 const location: FileLocation = JSON.parse(args[0]);
-
-                const file = fetchFile(location);
-                args[1](JSON.stringify(file));
-
+                ack(JSON.stringify(fetchFile(location)));
                 break;
             }
+
             case 'COPY_FILE': {
                 const from: FileLocation = resolve(JSON.parse(args[0]));
                 const to: FileLocation = resolve(JSON.parse(args[1]));
+
                 if (statSync(from.path).isDirectory()) {
-                    cpSync(from.path, to.path, { 
-                        recursive: true 
-                    });
+                    cpSync(from.path, to.path, { recursive: true });
                 } else {
                     copyFileSync(from.path, to.path);
                 }
-                args[2]();
 
+                ack();
                 break;
             }
+
             case 'MOVE_FILE': {
                 const from: FileLocation = resolve(JSON.parse(args[0]));
                 const to: FileLocation = resolve(JSON.parse(args[1]));
                 renameSync(from.path, to.path);
-                args[2]();
-
+                ack();
                 break;
             }
+
             case 'CREATE_FOLDER': {
                 const location: FileLocation = resolve(JSON.parse(args[0]));
-                args[1]((() => {
+                ack((() => {
                     if (existsSync(location.path)) {
                         return false;
                     }
+
                     mkdirSync(location.path);
                     return true;
                 })());
-
                 break;
             }
+
             case 'CREATE_FILE': {
                 const location: FileLocation = resolve(JSON.parse(args[0]));
+
                 if (!existsSync(location.path)) {
                     writeFileSync(location.path, '');
                 }
-                args[1]();
 
+                ack();
                 break;
             }
+
             case 'DELETE_FILE': {
                 const location: FileLocation = resolve(JSON.parse(args[0]));
+
                 if (existsSync(location.path)) {
                     if (statSync(location.path).isDirectory()) {
-                        rmSync(location.path, { 
-                            recursive: true 
-                        });
+                        rmSync(location.path, { recursive: true });
                     } else {
                         unlinkSync(location.path);
                     }
                 }
-                args[1]();
 
+                ack();
                 break;
             }
+
             case 'UPLOAD_FILE': {
                 const location: FileLocation = resolve(JSON.parse(args[0]));
                 const id: string = args[1];
@@ -178,12 +164,11 @@ export default {
                         writeFileSync(location.path, buffer);
                     });
                 }
-
                 break;
             }
+
             case 'DOWNLOAD_FILE': {
                 const location: FileLocation = resolve(JSON.parse(args[0]));
-                const ack = args[1];
 
                 if (!existsSync(location.path)) {
                     return;
@@ -193,6 +178,8 @@ export default {
                 const room = `download-${id}`;
 
                 const stat = statSync(location.path);
+
+                // TODO: cleanup this
                 if (stat.isDirectory()) {
                     const name = location.path.substring(location.path.lastIndexOf(path.sep) + 1);
                     const archive = archiver('zip', { zlib: { level: 9 } });
@@ -227,6 +214,7 @@ export default {
                         }
                     });
                 }
+                break;
             }
         }
     }
