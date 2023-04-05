@@ -21,7 +21,7 @@ export function resolve(location: FileLocation) : FileLocation {
     };
 }
 
-export function fetchFile(location: FileLocation, grabContent?: boolean) : FileData | undefined {
+export function fetchFile(location: FileLocation, grabContent?: boolean, recurseDirs: boolean = true) : FileData | undefined {
     const newLocation = resolve(location);
 
     if (!newLocation.path.startsWith(START_DIR) || !existsSync(newLocation.path)) {
@@ -33,16 +33,12 @@ export function fetchFile(location: FileLocation, grabContent?: boolean) : FileD
     const size = stat.size;
     
     if (stat.isDirectory()) {
-        if (path.resolve(path.join(newLocation.path, name), '..') !== newLocation.path) {
-            return undefined;
-        }
-
         return { 
             name, directory: true, accessible: true, size, 
-            children: readdirSync(newLocation.path).map((file) => fetchFile({
+            children: recurseDirs ? readdirSync(newLocation.path).map((file) => fetchFile({
                 path: `${newLocation.path}/${file}`,
                 root: false
-            }, true)) as FileData[]
+            }, true, false)).filter((child) => child !== undefined) as FileData[] : []
         };
     }
 
