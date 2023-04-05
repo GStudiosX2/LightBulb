@@ -16,4 +16,4 @@ To specify which directory the file manager should start from you do `yarn dist 
 # Learn More:
 `yarn dist --help`
 
-Now you can manage files on your local computer or server from `glass.santio.me`.
+Now you can manage files on your computer or vps/dedicated server from `glass.santio.me`.
