@@ -22,5 +22,8 @@ Now you can manage files on your computer or vps/dedicated server from `glass.sa
 
 ![image](https://user-images.githubusercontent.com/76548041/230159307-688b8c19-7f2c-4f0b-84f9-3d7b81a13e7b.png)
 ![image](https://user-images.githubusercontent.com/76548041/230159357-a3129ccc-debb-4f17-99c0-d362c517803f.png)
+![image](https://user-images.githubusercontent.com/76548041/230201174-a2c1165e-e8e7-4e87-b3a8-77b1920960b5.png)
+![image](https://user-images.githubusercontent.com/76548041/230201267-0c61d401-1102-4eb6-87e4-0e5c5b6eebe2.png)
+![image](https://user-images.githubusercontent.com/76548041/230201358-6e02af6a-d5d3-4a29-a19f-897e6f058bba.png)
 
 **WARNING FTP may not work yet and you can't run commands from the console like if you have ssh'd into the server this may be a feature soon!**
