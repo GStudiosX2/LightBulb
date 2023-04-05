@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync } from "fs";
+import { copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync } from "fs";
 import path, { } from "path";
 import { START_DIR, socket } from "../..";
 import { writeFileSync } from "fs";
@@ -67,7 +67,7 @@ export function fetchFile(location: FileLocation) : FileData | undefined {
 }
 
 export default {
-    name: ['ALL_FILES', 'FETCH_FILE', 'COPY_FILE', 'CREATE_FOLDER', 'CREATE_FILE', 'UPLOAD_FILE', 'DOWNLOAD_FILE', 'DELETE_FILE'],
+    name: ['ALL_FILES', 'FETCH_FILE', 'COPY_FILE', 'CREATE_FOLDER', 'CREATE_FILE', 'UPLOAD_FILE', 'DOWNLOAD_FILE', 'DELETE_FILE', 'MOVE_FILE'],
     callback: (name: string, args: any[]) => {
         switch (name) {
             case 'ALL_FILES': {
@@ -94,7 +94,17 @@ export default {
                 break;
             }
             case 'COPY_FILE': {
-                console.log(JSON.parse(args[0]), JSON.parse(args[1]));
+                const from: FileLocation = resolve(JSON.parse(args[0]));
+                const to: FileLocation = resolve(JSON.parse(args[1]));
+                copyFileSync(from.path, to.path);
+                args[2]();
+
+                break;
+            }
+            case 'MOVE_FILE': {
+                const from: FileLocation = resolve(JSON.parse(args[0]));
+                const to: FileLocation = resolve(JSON.parse(args[1]));
+                renameSync(from.path, to.path);
                 args[2]();
 
                 break;
@@ -144,7 +154,6 @@ export default {
                     socket.client.on(`BUFFER-${id}`, listener);
 
                     socket.client.once(`EOF-${id}`, () => {
-                        // console.log(buffer);
                         if (socket.client) {
                             socket.client.off(`BUFFER-${id}`, listener);
                         }
